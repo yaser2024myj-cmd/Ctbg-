@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Hero - بايثون هيرو</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, sans-serif; 
+            background: #0f172a; 
+            color: #f8fafc; 
+            margin: 0; 
+            padding: 15px; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container { 
+            width: 100%; 
+            max-width: 480px; 
+            background: #1e293b; 
+            padding: 20px; 
+            border-radius: 16px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); 
+            border: 1px solid #334155;
+        }
+        .header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 1px solid #334155; 
+            padding-bottom: 12px; 
+            margin-bottom: 20px; 
+        }
+        button { 
+            background: #3b82f6; 
+            color: white; 
+            border: none; 
+            padding: 10px 16px; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 14px;
+            transition: 0.2s; 
+        }
+        button:active { transform: scale(0.95); }
+        .btn-back { background: #64748b; }
+        .btn-retry { background: #eab308; color: #0f172a; }
+        .streak-badge { background: #ea580c; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; }
+        .section-box { 
+            background: #334155; 
+            padding: 16px; 
+            border-radius: 12px; 
+            margin-bottom: 12px; 
+            cursor: pointer; 
+            border: 1px solid #475569;
+            transition: 0.2s;
+        }
+        .section-box:active { background: #475569; }
+        .section-box h3 { margin: 0 0 5px 0; color: #38bdf8; }
+        .section-box p { margin: 0; color: #94a3b8; font-size: 13px; }
+        .hidden { display: none !important; }
+        .code-box {
+            background: #0f172a;
+            border: 1px solid #475569;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: monospace;
+            color: #38bdf8;
+            margin: 15px 0;
+            text-align: left;
+            direction: ltr;
+        }
+        .success-msg { color: #22c55e; font-weight: bold; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="app">
+    <!-- شاشة الهيدر والتحكم (زر الرجوع، إعادة المرحلة، الستريك) -->
+    <div class="header">
+        <div>
+            <button class="btn-back hidden" id="backBtn" onclick="goHome()">⬅️ رجوع</button>
+            <span class="streak-badge" id="streakDisplay">🔥 الستريك: 5 أيام</span>
+        </div>
+        <div>
+            <button class="btn-retry hidden" id="retryBtn" onclick="retryStage()">🔄 إعادة</button>
+        </div>
+    </div>
+
+    <!-- القائمة الرئيسية (الزرين: الأساسيات والفرعيات) -->
+    <div id="homeScreen">
+        <h2 style="margin-top: 0; text-align: center;">🐍 بايثون هيرو</h2>
+        <p style="text-align: center; color: #94a3b8; margin-bottom: 20px;">تعلم البرمجة من الصفر لاحتراف الـ APK والتطبيقات!</p>
+        
+        <div class="section-box" onclick="openSection('fundamentals')">
+            <h3>🟩 القسم الأول: الأساسيات الإلزامية</h3>
+            <p>المتغيرات، الشروط، الحلقات، والقوائم.</p>
+        </div>
+        
+        <div class="section-box" onclick="openSection('advanced')">
+            <h3>🟦 القسم الثاني: الفرعيات والمتقدمات</h3>
+            <p>الدوال، الملفات، الأخطاء، والبرمجة الكائنية (OOP).</p>
+        </div>
+
+        <div style="margin-top: 25px; text-align: center;">
+            <button onclick="exportData()" style="background: #10b981; width: 100%; margin-bottom: 8px;">📥 تصدير نسختي الاحتياطية</button>
+            <input type="file" id="importFile" style="display:none" onchange="importData(event)">
+            <button onclick="document.getElementById('importFile').click()" style="background: #8b5cf6; width: 100%;">📤 استرجاع نسخة سابقة</button>
+        </div>
+    </div>
+
+    <!-- شاشة الدروس والمحتوى -->
+    <div id="lessonScreen" class="hidden">
+        <h2 id="lessonTitle" style="color: #38bdf8; margin-top: 0;">عنوان الدرس</h2>
+        <p id="lessonDesc" style="line-height: 1.6;">هنا سيكون شرح الدرس...</p>
+        
+        <div class="code-box" id="lessonCode">
+            # مثال كود بايثون هنا
+            print("مرحباً بك يا بطل!")
+        </div>
+
+        <button onclick="completeStage()" style="background: #10b981; width: 100%; margin-top: 10px;">✅ إتمام التحدي وربح النجوم ⭐</button>
+        <div id="resultArea" style="text-align: center;"></div>
+    </div>
+</div>
+
+<script>
+    // نظام الحفظ التلقائي الآلي بالكامل (يعمل أوفلاين داخل الـ APK)
+    let playerData = JSON.parse(localStorage.getItem('pythonHeroData')) || {
+        streak: 5,
+        completedStages: []
+    };
+
+    function saveProgress() {
+        localStorage.setItem('pythonHeroData', JSON.stringify(playerData));
+    }
+
+    function openSection(sectionName) {
+        document.getElementById('homeScreen').classList.add('hidden');
+        document.getElementById('lessonScreen').classList.remove('hidden');
+        document.getElementById('backBtn').classList.remove('hidden');
+        document.getElementById('retryBtn').classList.remove('hidden');
+        
+        if(sectionName === 'fundamentals') {
+            document.getElementById('lessonTitle').innerText = "🟩 أساسيات بايثون: المتغيرات";
+            document.getElementById('lessonDesc').innerText = "الصناديق والمتغيرات: تخزين البيانات بحرية تامة داخل الذاكرة بدون تعقيد.";
+            document.getElementById('lessonCode').innerText = "score = 100\nprint(score)";
+        } else {
+            document.getElementById('lessonTitle').innerText = "🟦 فرعيات بايثون: الدوال (Functions)";
+            document.getElementById('lessonDesc').innerText = "التعاويذ البرمجية: تجميع الأوامر في كتلة واحدة واستدعائها متى ما احتجتها.";
+            document.getElementById('lessonCode').innerText = "def say_hello():\n    print('أهلاً بك!')\nsay_hello()";
+        }
+        document.getElementById('resultArea').innerHTML = "";
+    }
+
+    function goHome() {
+        document.getElementById('lessonScreen').classList.add('hidden');
+        document.getElementById('homeScreen').classList.remove('hidden');
+        document.getElementById('backBtn').classList.add('hidden');
+        document.getElementById('retryBtn').classList.add('hidden');
+    }
+
+    function retryStage() {
+        document.getElementById('resultArea').innerHTML = "<p style='color: #eab308;'>🔄 تم إعادة ضبط المرحلة، اقرا الشرك بتركيز وركز زين!</p>";
+    }
+
+    function completeStage() {
+        document.getElementById('resultArea').innerHTML = "<p class='success-msg'>🌟 كفو يا بطل! أخذت 3 نجوم وحُفظت بياناتك تلقائياً في التطبيق!</p>";
+        if (!playerData.completedStages.includes(1)) {
+            playerData.completedStages.push(1);
+            saveProgress(); // الحفظ الفوري الآلي
+        }
+    }
+
+    // دوال الأمان والنسخ الاحتياطي اليدوي (لو غير جواله)
+    function exportData() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(playerData));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", "python_hero_save.json");
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+    }
+
+    function importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                playerData = JSON.parse(e.target.result);
+                saveProgress();
+                alert("✅ تم استرجاع كل مراحلك ونجومك بنجاح تام!");
+                location.reload();
+            } catch (err) {
+                alert("❌ الملف تالف أو غير صالح.");
+            }
+        };
+        reader.readAsText(file);
+    }
+</script>
+
+</body>
+</html>
